@@ -3,6 +3,7 @@ import {Server} from "http";
 import mongoose from "mongoose";
 import app from "./app";
 import { envVars } from "./app/config/env";
+import { seedSuperAdmin } from "./app/Utils/seedSuperAdmin";
 
 let server : Server;
 
@@ -23,7 +24,10 @@ server = app.listen(envVars.PORT, () => {
    
 }
 
-startServer()
+(async () => {
+    await startServer()
+    await seedSuperAdmin()
+})()
 
 process.on("SIGINT", (err) => {
     console.log("SIGINT signal recieved... Server is shutting down..", err);
