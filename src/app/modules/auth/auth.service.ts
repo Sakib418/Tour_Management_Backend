@@ -1,11 +1,14 @@
 import AppError from "../../errorHandlers/AppError";
-import { IUser } from "../user/user.interface";
+import { IsActive, IUser } from "../user/user.interface";
 import httpStatus from "http-status-codes";
 import { User } from "../user/user.model";
 import bcryptjs from "bcryptjs";
 
-import { generateToken } from "../../Utils/jwt";
+import { generateToken, verifyToken } from "../../Utils/jwt";
 import { envVars } from "../../config/env";
+import { createNewAccessTokenWithRefreshToken, createUserTokens } from "../../Utils/userTokens";
+import { JwtPayload } from "jsonwebtoken";
+import { string } from "zod";
 
 const credentialsLogin = async (payload: Partial<IUser>) => {
     const {email,password} = payload;
@@ -22,14 +25,21 @@ const credentialsLogin = async (payload: Partial<IUser>) => {
         throw new AppError(httpStatus.BAD_REQUEST, "Incorrect Password")
     }
     
-    const jwtPayload = {
-        userId: isUserExist._id,
-        email: isUserExist.email,
-        role: isUserExist.role
-    }
+    // const jwtPayload = {
+    //     userId: isUserExist._id,
+    //     email: isUserExist.email,
+    //     role: isUserExist.role
+    // }
      
-    const accessToken = generateToken(jwtPayload,envVars.JWT_ACCESS_SECRET
-        ,envVars.JWT_ACCESS_EXPIRES);
+    // const accessToken = generateToken(jwtPayload,envVars.JWT_ACCESS_SECRET
+    //     ,envVars.JWT_ACCESS_EXPIRES);
+
+    //  const refreshToken = generateToken(jwtPayload,envVars.JWT_REFRESH_SECRET,
+    //     envVars.JWT_REFRESH_EXPIRES)
+      
+       const userToken = createUserTokens(isUserExist);
+        
+        const {password: pass,...rest} = isUserExist.toObject();
 
 
     // const accessToken = jwt.sign(jwtPayload,"secret",{
@@ -37,10 +47,41 @@ const credentialsLogin = async (payload: Partial<IUser>) => {
     // })
 
     return{
-        accessToken
+        accessToken : userToken.accessToken,
+        refreshToken : userToken.refreshToken,
+        user: rest
     }
 }
 
+
+const getNewAccessToken = async (refreshToken : string) => {
+    
+     const newAccessToken = await createNewAccessTokenWithRefreshToken(refreshToken)
+
+     return{
+        accessToken :newAccessToken
+        
+    }
+}
+
+const resetPassword = async (decodedToken : JwtPayload,newPassword: string,oldPassword: string) => {
+    
+     const user = await User.findById(decodedToken.userId);
+
+     const isOldPasswordMatch = await bcryptjs.compare(oldPassword, user!.password as string);
+     
+      if(!isOldPasswordMatch){
+        throw new AppError(httpStatus.UNAUTHORIZED, "Old Password does not mathc");
+      }
+      user!.password = await bcryptjs.hash(newPassword, Number(envVars.BCRYPT_SALT_ROUND));
+      
+      user?.save();
+
+}
+
+
 export const AuthService = {
-    credentialsLogin
+    credentialsLogin,
+    getNewAccessToken,
+    resetPassword
 }
