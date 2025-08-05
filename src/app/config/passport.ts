@@ -4,6 +4,8 @@ import { envVars } from "./env";
 import { User } from "../modules/user/user.model";
 import { Role } from "../modules/user/user.interface";
 
+// GOO0GLE_CLIENT_SECRET =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Test
+// GO0OGLE_CLIENT_ID=935529932618-6cdbidj6do6glvd0b01djms8kcqplk1g.apps.googleusercontent.com
 
 passport.use(
     new GoogleStrategy(
