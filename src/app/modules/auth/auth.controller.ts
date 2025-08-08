@@ -10,31 +10,76 @@ import { User } from "../user/user.model";
 import { JwtPayload } from "jsonwebtoken";
 import { createUserTokens } from "../../Utils/userTokens";
 import { envVars } from "../../config/env";
-
+import passport from "passport"
 
 const credentialsLogin = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
    
-
-    const loginInfo = await AuthService.credentialsLogin(req.body)
+  //General custom login start
+  //   const loginInfo = await AuthService.credentialsLogin(req.body)
     
-    //  res.cookie("accessToken", loginInfo.accessToken,{
-    //   httpOnly: true,
-    //   secure: false,
-    // })
+  //   //  res.cookie("accessToken", loginInfo.accessToken,{
+  //   //   httpOnly: true,
+  //   //   secure: false,
+  //   // })
 
-    // res.cookie("refreshToken", loginInfo.refreshToken,{
-    //   httpOnly: true,
-    //   secure: false,
-    // })
+  //   // res.cookie("refreshToken", loginInfo.refreshToken,{
+  //   //   httpOnly: true,
+  //   //   secure: false,
+  //   // })
 
 
-  setAuthCookie(res,loginInfo);
-  sendResponse(res,{
-    success: true,
-    statusCode: httpStatus.CREATED,
-    message: "User Created Successfully",
-    data: loginInfo
-  })    
+  // setAuthCookie(res,loginInfo);
+  // sendResponse(res,{
+  //   success: true,
+  //   statusCode: httpStatus.CREATED,
+  //   message: "User Created Successfully",
+  //   data: loginInfo
+  // })  
+    //General custom login end
+    
+    passport.authenticate("local", async (err: any, user: any, info: any) => {
+
+        if (err) {
+
+            // ❌❌❌❌❌
+            // throw new AppError(401, "Some error")
+            // next(err)
+            // return new AppError(401, err)
+
+
+            // ✅✅✅✅
+            // return next(err)
+            // console.log("from err");
+            return next(new AppError(401, err))
+        }
+
+        if (!user) {
+            // console.log("from !user");
+            // return new AppError(401, info.message)
+            return next(new AppError(401, info.message))
+        }
+
+        const userTokens = await createUserTokens(user)
+
+        // delete user.toObject().password
+
+        const { password: pass, ...rest } = user.toObject()
+
+
+        setAuthCookie(res, userTokens)
+
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "User Logged In Successfully",
+            data: {
+                accessToken: userTokens.accessToken,
+                refreshToken: userTokens.refreshToken,
+                user: rest
+
+            },
+        })
+    })(req, res, next)
 })
 
 const getNewAccessToken = catchAsync(async (req: Request, res: Response, next: NextFunction) => {

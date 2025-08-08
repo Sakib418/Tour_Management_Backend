@@ -1,57 +1,54 @@
 import AppError from "../../errorHandlers/AppError";
-import { IsActive, IUser } from "../user/user.interface";
 import httpStatus from "http-status-codes";
 import { User } from "../user/user.model";
 import bcryptjs from "bcryptjs";
-
-import { generateToken, verifyToken } from "../../Utils/jwt";
 import { envVars } from "../../config/env";
-import { createNewAccessTokenWithRefreshToken, createUserTokens } from "../../Utils/userTokens";
+import { createNewAccessTokenWithRefreshToken } from "../../Utils/userTokens";
 import { JwtPayload } from "jsonwebtoken";
-import { string } from "zod";
 
-const credentialsLogin = async (payload: Partial<IUser>) => {
-    const {email,password} = payload;
 
-    const isUserExist = await User.findOne({email})
-    console.log(isUserExist);
-    if(!isUserExist){
-        throw new AppError(httpStatus.BAD_REQUEST, "Email does not exist")
-    }
-    const isPasswordMatched = await bcryptjs.compare(password as string , isUserExist.password as string)
+// const credentialsLogin = async (payload: Partial<IUser>) => {
+//     const {email,password} = payload;
+
+//     const isUserExist = await User.findOne({email})
+//     console.log(isUserExist);
+//     if(!isUserExist){
+//         throw new AppError(httpStatus.BAD_REQUEST, "Email does not exist")
+//     }
+//     const isPasswordMatched = await bcryptjs.compare(password as string , isUserExist.password as string)
     
-    if(!isPasswordMatched)
-    {
-        throw new AppError(httpStatus.BAD_REQUEST, "Incorrect Password")
-    }
+//     if(!isPasswordMatched)
+//     {
+//         throw new AppError(httpStatus.BAD_REQUEST, "Incorrect Password")
+//     }
     
-    // const jwtPayload = {
-    //     userId: isUserExist._id,
-    //     email: isUserExist.email,
-    //     role: isUserExist.role
-    // }
+//     // const jwtPayload = {
+//     //     userId: isUserExist._id,
+//     //     email: isUserExist.email,
+//     //     role: isUserExist.role
+//     // }
      
-    // const accessToken = generateToken(jwtPayload,envVars.JWT_ACCESS_SECRET
-    //     ,envVars.JWT_ACCESS_EXPIRES);
+//     // const accessToken = generateToken(jwtPayload,envVars.JWT_ACCESS_SECRET
+//     //     ,envVars.JWT_ACCESS_EXPIRES);
 
-    //  const refreshToken = generateToken(jwtPayload,envVars.JWT_REFRESH_SECRET,
-    //     envVars.JWT_REFRESH_EXPIRES)
+//     //  const refreshToken = generateToken(jwtPayload,envVars.JWT_REFRESH_SECRET,
+//     //     envVars.JWT_REFRESH_EXPIRES)
       
-       const userToken = createUserTokens(isUserExist);
+//        const userToken = createUserTokens(isUserExist);
         
-        const {password: pass,...rest} = isUserExist.toObject();
+//         const {password: pass,...rest} = isUserExist.toObject();
 
 
-    // const accessToken = jwt.sign(jwtPayload,"secret",{
-    //     expiresIn: "1d"
-    // })
+//     // const accessToken = jwt.sign(jwtPayload,"secret",{
+//     //     expiresIn: "1d"
+//     // })
 
-    return{
-        accessToken : userToken.accessToken,
-        refreshToken : userToken.refreshToken,
-        user: rest
-    }
-}
+//     return{
+//         accessToken : userToken.accessToken,
+//         refreshToken : userToken.refreshToken,
+//         user: rest
+//     }
+// }
 
 
 const getNewAccessToken = async (refreshToken : string) => {
@@ -81,7 +78,7 @@ const resetPassword = async (decodedToken : JwtPayload,newPassword: string,oldPa
 
 
 export const AuthService = {
-    credentialsLogin,
+    //credentialsLogin,
     getNewAccessToken,
     resetPassword
 }
